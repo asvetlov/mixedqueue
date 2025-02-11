@@ -21,16 +21,16 @@ class TestMixedMode:
     async def test_get_loop_ok(self):
         q = janus.Queue()
         loop = asyncio.get_running_loop()
-        assert q._get_loop() is loop
-        assert q._loop is loop
+        assert q._async_not_empty._get_loop() is loop
+        assert q._async_not_empty._loop is loop
 
     @pytest.mark.asyncio
     async def test_get_loop_different_loop(self):
         q = janus.Queue()
         # emulate binding another loop
-        loop = q._loop = asyncio.new_event_loop()
+        loop = q._async_not_empty._loop = asyncio.new_event_loop()
         with pytest.raises(RuntimeError, match="is bound to a different event loop"):
-            q._get_loop()
+            q._async_not_empty._get_loop()
         loop.close()
 
     @pytest.mark.asyncio
@@ -310,7 +310,7 @@ class TestMixedMode:
             for _ in range(4):
                 executor.submit(q.sync_q.get)
 
-            while q._sync_not_empty_waiting != 4:
+            while q._sync_not_empty.waiting != 4:
                 await asyncio.sleep(0.001)
 
             q.sync_q.put_nowait(1)
@@ -328,7 +328,7 @@ class TestMixedMode:
 
         tasks = [loop.create_task(q.async_q.get()) for _ in range(4)]
 
-        while q._async_not_empty_waiting != 4:
+        while q._async_not_empty.waiting != 4:
             await asyncio.sleep(0)
 
         q.sync_q.put_nowait(1)
@@ -351,7 +351,7 @@ class TestMixedMode:
             for _ in range(4):
                 executor.submit(q.sync_q.put, object())
 
-            while q._sync_not_full_waiting != 4:
+            while q._sync_not_full.waiting != 4:
                 await asyncio.sleep(0.001)
 
             q.sync_q.get_nowait()
@@ -371,7 +371,7 @@ class TestMixedMode:
 
         tasks = [loop.create_task(q.async_q.put(object())) for _ in range(4)]
 
-        while q._async_not_full_waiting != 4:
+        while q._async_not_full.waiting != 4:
             await asyncio.sleep(0)
 
         q.sync_q.get_nowait()
