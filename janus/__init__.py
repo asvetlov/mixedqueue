@@ -573,7 +573,6 @@ class _AsyncQueueProxy(AsyncQueue[T]):
             if parent._is_shutdown:
                 raise AsyncQueueShutDown
 
-            parent._get_loop()
             if 0 < parent._maxsize <= parent._qsize():
                 raise AsyncQueueFull
 
@@ -626,7 +625,6 @@ class _AsyncQueueProxy(AsyncQueue[T]):
             if not parent._qsize():
                 raise AsyncQueueEmpty
 
-            parent._get_loop()
             item = parent._get()
             if parent._async_not_full_waiting:
                 parent._notify_async(parent._async_not_full.notify)
